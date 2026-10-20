@@ -1,58 +1,40 @@
 const products = require('../../src/data/products')
-const { searchProducts } = require('../../src/catalog')
+const { getProductById } = require('../../src/catalog')
 
-describe('searchProducts', () => {
-  test("'Наушники' возвращает товар с ID 1", () => {
-    expect(
-      searchProducts(products, 'Наушники').map(product => product.id),
-    ).toEqual([1])
+describe('getProductById', () => {
+  test('ID 1 возвращает products[0]', () => {
+    expect(getProductById(products, 1)).toEqual(products[0])
   })
 
-  test("'Чистый код' возвращает товар с ID 6", () => {
-    expect(
-      searchProducts(products, 'Чистый код').map(product => product.id),
-    ).toEqual([6])
+  test('ID 4 возвращает products[3]', () => {
+    expect(getProductById(products, 4)).toEqual(products[3])
   })
 
-  test("'Настольная лампа' возвращает товар с ID 4", () => {
-    expect(
-      searchProducts(products, 'Настольная лампа').map(product => product.id),
-    ).toEqual([4])
+  test('ID 6 возвращает products[5]', () => {
+    expect(getProductById(products, 6)).toEqual(products[5])
   })
 
-  test("'javascript' возвращает товар с ID 3", () => {
-    expect(
-      searchProducts(products, 'javascript').map(product => product.id),
-    ).toEqual([3])
+  test('ID 0 возвращает null', () => {
+    expect(getProductById(products, 0)).toBeNull()
   })
 
-  test("'ЧЕХОЛ' возвращает товар с ID 5", () => {
-    expect(
-      searchProducts(products, 'ЧЕХОЛ').map(product => product.id),
-    ).toEqual([5])
+  test('ID 999 возвращает null', () => {
+    expect(getProductById(products, 999)).toBeNull()
   })
 
-  test("'наушники' возвращает товар с ID 1", () => {
-    expect(
-      searchProducts(products, 'наушники').map(product => product.id),
-    ).toEqual([1])
+  test('ID -1 возвращает null', () => {
+    expect(getProductById(products, -1)).toBeNull()
   })
 
-  test('пустая строка возвращает товары с ID [1, 2, 3, 4, 5, 6]', () => {
-    expect(searchProducts(products, '').map(product => product.id)).toEqual([
-      1, 2, 3, 4, 5, 6,
-    ])
+  test("строковый ID '1' возвращает null", () => {
+    expect(getProductById(products, '1')).toBeNull()
   })
 
-  test('строка из пробелов возвращает товары с ID [1, 2, 3, 4, 5, 6]', () => {
-    expect(searchProducts(products, '   ').map(product => product.id)).toEqual([
-      1, 2, 3, 4, 5, 6,
-    ])
+  test('ID undefined возвращает null', () => {
+    expect(getProductById(products, undefined)).toBeNull()
   })
 
-  test("'\\t\\n' возвращает товары с ID [1, 2, 3, 4, 5, 6]", () => {
-    expect(searchProducts(products, '\t\n').map(product => product.id)).toEqual(
-      [1, 2, 3, 4, 5, 6],
-    )
+  test('ID NaN возвращает null', () => {
+    expect(getProductById(products, NaN)).toBeNull()
   })
 })
