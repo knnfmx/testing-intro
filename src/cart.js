@@ -26,8 +26,24 @@ function addToCart(cart, product, quantity) {
   return [...cart, { ...product, quantity }]
 }
 
-function changeQuantity() {
-  return notImplemented()
+function changeQuantity(cart, id, quantity) {
+  const existing = cart.find(item => item.id === id)
+
+  if (!existing) {
+    return [...cart]
+  }
+
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new RangeError('Количество должно быть положительным целым числом')
+  }
+
+  if (quantity > existing.stock) {
+    throw new RangeError(
+      `Недостаточно товара на складе: доступно ${existing.stock}`,
+    )
+  }
+
+  return cart.map(item => (item.id === id ? { ...item, quantity } : item))
 }
 function removeFromCart() {
   return notImplemented()
