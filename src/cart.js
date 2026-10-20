@@ -1,25 +1,30 @@
-function addToCart(cart, product, quantity) {
+function assertValidQuantity(quantity) {
   if (!Number.isInteger(quantity) || quantity <= 0) {
     throw new RangeError('Количество должно быть положительным целым числом')
   }
+}
+
+function assertStockAvailable(requested, stock) {
+  if (requested > stock) {
+    throw new RangeError(`Недостаточно товара на складе: доступно ${stock}`)
+  }
+}
+
+function addToCart(cart, product, quantity) {
+  assertValidQuantity(quantity)
 
   const existing = cart.find(item => item.id === product.id)
-  const currentQuantity = existing ? existing.quantity : 0
-  const newQuantity = currentQuantity + quantity
+  const newQuantity = (existing ? existing.quantity : 0) + quantity
 
-  if (newQuantity > product.stock) {
-    throw new RangeError(
-      `Недостаточно товара на складе: доступно ${product.stock}`,
-    )
+  assertStockAvailable(newQuantity, product.stock)
+
+  if (!existing) {
+    return [...cart, { ...product, quantity }]
   }
 
-  if (existing) {
-    return cart.map(item =>
-      item.id === product.id ? { ...item, quantity: newQuantity } : item,
-    )
-  }
-
-  return [...cart, { ...product, quantity }]
+  return cart.map(item =>
+    item.id === product.id ? { ...item, quantity: newQuantity } : item,
+  )
 }
 
 function changeQuantity(cart, id, quantity) {
@@ -29,15 +34,8 @@ function changeQuantity(cart, id, quantity) {
     return [...cart]
   }
 
-  if (!Number.isInteger(quantity) || quantity <= 0) {
-    throw new RangeError('Количество должно быть положительным целым числом')
-  }
-
-  if (quantity > existing.stock) {
-    throw new RangeError(
-      `Недостаточно товара на складе: доступно ${existing.stock}`,
-    )
-  }
+  assertValidQuantity(quantity)
+  assertStockAvailable(quantity, existing.stock)
 
   return cart.map(item => (item.id === id ? { ...item, quantity } : item))
 }
@@ -50,17 +48,32 @@ function calculateCartSubtotal(cart) {
   return cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 }
 
-function calculateOrderTotal(cart, promoCode) {
+const DEFAULT_ORDER_RULES = {
+  freeDeliveryThreshold: 50000,
+  deliveryCost: 30000,
+  promoCodes: {
+    SAVE10: { minSubtotal: 20000, percent: 10 },
+  },
+}
+
+function calculateOrderTotal(cart, promoCode, rules = DEFAULT_ORDER_RULES) {
   const subtotal = calculateCartSubtotal(cart)
 
-  const isSave10 = promoCode === 'SAVE10' && subtotal >= 20000
-  const discount = isSave10 ? Math.round(subtotal * 0.1) : 0
+  const promo = rules.promoCodes[promoCode]
+  const discount =
+    promo && subtotal >= promo.minSubtotal
+      ? Math.round((subtotal * promo.percent) / 100)
+      : 0
 
-  const delivery = subtotal >= 50000 ? 0 : 30000
+  const delivery =
+    subtotal >= rules.freeDeliveryThreshold ? 0 : rules.deliveryCost
 
-  const total = subtotal - discount + delivery
-
-  return { subtotal, discount, delivery, total }
+  return {
+    subtotal,
+    discount,
+    delivery,
+    total: subtotal - discount + delivery,
+  }
 }
 
 const cartApi = {
